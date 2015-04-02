@@ -31,6 +31,7 @@ def dump_train_user(csv_path, db_address):
         train_userdb.insert(data)
         count += 1
         # line = csvfile.readline()
+    conn.disconnect()
     print '处理完毕'
 
 
@@ -60,11 +61,13 @@ def dump_train_item(csv_path, db_address):
         train_item_db.insert(data)
         count += 1
         # line = csvfile.readline()
+    conn.disconnect()
     print '处理完毕'
 
 
+# def dump
 
 
 
 # if __name__ == '__main__':
-    # dump_train_item(r'D:\CS\DataMining\tianchi\data\tianchi_mobile_recommend_train_item.csv','localhost')
+# dump_train_item(r'D:\CS\DataMining\tianchi\data\tianchi_mobile_recommend_train_item.csv','localhost')
