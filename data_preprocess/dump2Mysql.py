@@ -14,15 +14,17 @@ logger.setLevel(logging.DEBUG)
 fh = logging.FileHandler('data_process.log')
 fh.setLevel(logging.DEBUG)
 # create formatter and add it to the handlers
-formatter = logging.Formatter('%(asctime)s - %(name)s- %(levelname)s - %(message)s')
+formatter = logging.Formatter('%(asctime)s - %(name)s- '
+                              '%(levelname)s - %(message)s')
 fh.setFormatter(formatter)
 # add handlers to logger
 logger.addHandler(fh)
 
 
-def insert2table(connect, fin='tianchi_mobile_recommend_train_user.csv'):
+def insert_train_user_2table(connect,
+                             fin='tianchi_mobile_recommend_train_user.csv'):
     """
-    把文件的内容插入到数据库中
+    把train_user.csv文件的内容插入到数据库中
 
     Args:
         connect: Mysqldb.connect(), 数据库连接句柄
@@ -36,7 +38,40 @@ def insert2table(connect, fin='tianchi_mobile_recommend_train_user.csv'):
         f.readline()    # 忽略首行
         for line in f:
             cols = line.strip().split(',')
-            sql = "INSERT INTO train_user SET user_id=%s, item_id=%s, behavior_type=%s, user_geohash='%s', item_category=%s, time=%s;" % (cols[0], cols[1], cols[2], cols[3], cols[4], arrow.get(cols[5], 'YYYY-MM-DD HH').timestamp)
+            sql = ("INSERT INTO train_user SET user_id=%s, item_id=%s,"
+                   "behavior_type=%s, user_geohash='%s', item_category=%s,"
+                   "time=%s;" % (cols[0], cols[1], cols[2], cols[3], cols[4],
+                                 arrow.get(cols[5], 'YYYY-MM-DD HH').timestamp)
+                   )
+            cursor.execute(sql)
+            counter += 1
+            if counter % 5000 == 0:
+                connect.commit()
+                logger.debug('Insert counter:%s' % (counter))
+    connect.commit()
+    logger.info('Done, and insert counter:%s' % (counter))
+    cursor.close()
+
+
+def insert_train_item_2table(connect,
+                             fin='tianchi_mobile_recommend_train_item.csv'):
+    """
+    把train_item.csv文件的内容插入到数据库中
+
+    Args:
+        connect: Mysqldb.connect(), 数据库连接句柄
+        fin: string, 用户对商品的操作记录文件
+    Returns:
+        None
+    """
+    cursor = connect.cursor()
+    counter = 0
+    with open(fin, 'rb') as f:
+        f.readline()    # 忽略首行
+        for line in f:
+            cols = line.strip().split(',')
+            sql = ("INSERT INTO train_item SET item_id=%s, item_geohash='%s',"
+                   "item_category=%s" % (cols[0], cols[1], cols[2]))
             cursor.execute(sql)
             counter += 1
             if counter % 5000 == 0:
@@ -65,7 +100,9 @@ def output(connect, fout="first_try.csv", top_N=5):
     count = 0
     with open(fout, 'w') as f:
         for [uid] in result_uids:
-            sql = 'select distinct item_id from train_user where user_id=%s and behavior_type=1 order by time DESC limit %s;' % (uid, top_N)
+            sql = ('select distinct item_id from train_user where user_id=%s'
+                   'and behavior_type=1 order by time DESC limit %s;'
+                   % (uid, top_N))
             cursor.execute(sql)
             result_item_ids = cursor.fetchall()
             count += 1
@@ -81,6 +118,7 @@ if __name__ == '__main__':
                               passwd='tianchi_data',
                               db='tianchi')
 
-#    insert2table(connect)
+#    insert_train_user_2table(connect)
 #    output(connect)
+    insert_train_item_2table(connect)
     connect.close()
