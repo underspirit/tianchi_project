@@ -1,11 +1,34 @@
 # coding=utf-8
 from datetime import datetime
+import logging
 import pymongo
+import time
 
 __author__ = 'Jayvee'
 
+# logger初始化
+# create logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+# create file handler
+fh = logging.FileHandler('./logs/data_process_dumpMongoDB.log')
+fh.setLevel(logging.DEBUG)
+# create formatter and add it to the handlers
+formatter = logging.Formatter('%(asctime)s - %(name)s- '
+                              '%(levelname)s - %(message)s')
+fh.setFormatter(formatter)
+# add handlers to logger
+logger.addHandler(fh)
+
 
 def dump_train_user(csv_path, db_address):
+    """
+    将train_user.csv的数据存入mongodb数据库
+    :param csv_path: csv文件的路径
+    :param db_address: mongodb的地址
+    :return:
+    """
+    logger.info('dump_train_user start')
     csvfile = open(csv_path)
     # for line in csvfile:
     head = csvfile.readline()
@@ -32,10 +55,18 @@ def dump_train_user(csv_path, db_address):
         count += 1
         # line = csvfile.readline()
     conn.disconnect()
+    logger.info('dump_train_user done')
     print '处理完毕'
 
 
 def dump_train_item(csv_path, db_address):
+    """
+    将train_item.csv的数据存入MongoDB数据库
+    :param csv_path: csv文件的路径
+    :param db_address: MongoDB的地址
+    :return:
+    """
+    logger.info('dump_train_item start')
     csvfile = open(csv_path)
     # for line in csvfile:
     head = csvfile.readline()
@@ -62,10 +93,10 @@ def dump_train_item(csv_path, db_address):
         count += 1
         # line = csvfile.readline()
     conn.disconnect()
+    logger.info('dump_train_item done')
     print '处理完毕'
 
 
-# def dump
 
 
 
