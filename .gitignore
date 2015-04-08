@@ -34,3 +34,6 @@ pip-delete-this-directory.txt
 
 # Log stuff:
 *.log
+
+# Vim
+*.swp

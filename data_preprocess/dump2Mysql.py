@@ -83,7 +83,8 @@ def insert_train_item_2table(connect,
 
 
 def output(connect, fout="first_try.csv", top_N=5):
-    """把用户最后浏览过的N条记录作为推荐结果输出
+    """
+    把用户最后浏览过的N条记录作为推荐结果输出
 
     Args:
         connect: Mysqldb.connect(), 数据库连接句柄
@@ -110,6 +111,29 @@ def output(connect, fout="first_try.csv", top_N=5):
                 logger.debug('output %s users' % (count))
             for [item_id] in result_item_ids:
                 f.write('%s,%s\n' % (uid, item_id))
+    cursor.close()
+
+
+def output_user_view_item_num(connect, fout='user_view_item_num.csv'):
+    """
+    输出每个用户浏览过的商品数
+
+    Args:
+        connect: Mysqldb.connect(), 数据库连接句柄
+        fout: string, 结果的输出文件
+    Returns:
+        None
+    """
+    cursor = connect.cursor()
+    sql = 'select user_id, count(distinct item_id) as item_num from train_user group by user_id'
+    cursor.execute(sql)
+    result = cursor.fetchall()
+
+    with open(fout, 'w') as f:
+        f.write('user_id,item_num\n')
+        for [uid, inum] in result:
+            f.write('%s,%s\n' % (uid, inum))
+    cursor.close()
 
 
 if __name__ == '__main__':
@@ -120,5 +144,6 @@ if __name__ == '__main__':
 
 #    insert_train_user_2table(connect)
 #    output(connect)
-    insert_train_item_2table(connect)
+#    insert_train_item_2table(connect)
+    output_user_view_item_num(connect)
     connect.close()
