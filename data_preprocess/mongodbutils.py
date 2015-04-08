@@ -4,7 +4,7 @@ __author__ = 'ITTC-Jayvee'
 
 
 class MongodbUtils:
-    def __init__(self, db_address, db_port):
+    def __init__(self, db_address, db_port=270107):
         conn = pymongo.Connection(db_address, db_port)
         self.__db = conn.TianchiData
 
