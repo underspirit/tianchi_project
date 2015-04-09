@@ -2,8 +2,7 @@
 import json
 import logging
 import math
-import time
-from data_preprocess.mongodbutils import MongodbUtils
+from data_preprocess.MongoDB_Utils import MongodbUtils
 
 __author__ = 'ITTC-Jayvee'
 
@@ -12,7 +11,7 @@ __author__ = 'ITTC-Jayvee'
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 # create file handler
-fh = logging.FileHandler('./logs/data_process_find_user_likehood.log')
+fh = logging.FileHandler('../logs/data_process_find_user_likehood.log')
 fh.setLevel(logging.DEBUG)
 # create formatter and add it to the handlers
 formatter = logging.Formatter('%(asctime)s - %(name)s- '
