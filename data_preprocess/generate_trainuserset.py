@@ -23,7 +23,7 @@ def generate_positive_userset(foutpath='../data/positive_userset.json'):
         data = {"user_id": userid}
         bought_item_ids = train_user.find(
             {'user_id': userid, "behavior_type": "4", "time": {"$gt": startTime, "$lt": stopTime}},
-            {'item_id': 1, '_id': 0})
+            {'item_id': 1, '_id': 0}).distinct("item_id")
         bought_items = []
         for itemid in bought_item_ids:
             bought_items.append(itemid)
