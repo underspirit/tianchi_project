@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""UserCF，基于用户相似度的推荐"""
+"""基于用户评分的推荐"""
 
 import MySQLdb
 import arrow
@@ -17,7 +17,6 @@ data_path = '%s/data' % (project_path)
 # project import
 sys.path.append(project_path)
 from log.get_logger import logger
-
 
 
 def add_time_affect(connect,
@@ -58,11 +57,35 @@ def add_time_affect(connect,
     cursor.close()    
 
 
+def output_userCF(topN = 3,
+                  fout_name='%s/UserCF_recommend_3.csv' % (data_path),
+                  fin_name='%s/UserCF_result.json' % (data_path)):
+    """
+    根据评分，得出推荐结果
+
+    Args:
+        topN: int, 推荐给每个用户topN个商品
+        fin_name: string, 用户评分结果文件
+        fout_name: string, 结果的输出文件
+    Returns:
+        None
+    """
+    with open(fin_name, 'r') as fin, open(fout_name, 'w') as fout:
+        fout.write('user_id,item_id\n')
+        for line in fin:
+            record = json.loads(line.strip())
+            user_id = record['user_id']
+            recommend_result = sorted(record['items'].iteritems(), key=lambda e: e[1], reverse=True)[:topN]
+            for (item_id, rate) in recommend_result:
+                fout.write('%s,%s\n' % (user_id, item_id))
+
+
 if __name__ == '__main__':
     connect = MySQLdb.connect(host='127.0.0.1',
                               user='tianchi_data',
                               passwd='tianchi_data',
                               db='tianchi')
 
-    add_time_affect(connect)
+    #add_time_affect(connect)
     connect.close()
+    output_userCF()
