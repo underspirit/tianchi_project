@@ -1,3 +1,4 @@
+# coding=utf-8
 import json
 from datetime import datetime
 import math
@@ -11,7 +12,15 @@ db_address = json.loads(open('../conf/DB_Address.conf', 'r').read())['MongoDB_Ad
 MAX_BOUGHT_BEHAVIOR_COUNT = 120236
 
 
+# 说明：从正样本中选取user_id与item_id，在建立向量的过程中只根据12-18日之前的数据，
+# 即在数据库查询语句中添加时间戳《12-18-00的条件
+
 def cal_item_popularity(item_id):
+    """
+    计算商品热门度，由于被除数都一样所以不再除以被购买商品总数，改为count的sigmoid形式
+    :param item_id:
+    :return:float类型的商品热度
+    """
     # logger.info('cal_item_popularity: item_id = ' + item_id)
     mongodb = MongodbUtils(db_address, 27017)
     train_user = mongodb.get_db().train_user
@@ -24,6 +33,11 @@ def cal_item_popularity(item_id):
 
 
 def cal_user_desire(user_id):
+    """
+    计算用户购买欲
+    :param user_id:
+    :return:float类型的用户购买欲
+    """
     # logger.info('cal_user_desire: user_id = ' + user_id)
     mongodb = MongodbUtils(db_address, 27017)
     train_user = mongodb.get_db().train_user
@@ -36,6 +50,12 @@ def cal_user_desire(user_id):
 
 
 def cal_useritem_behavior_rate(user_id, item_id):
+    """
+    计算指定用户对指定商品的操作数占该用户总操作数的比重
+    :param user_id:
+    :param item_id:
+    :return:
+    """
     # logger.info('cal_useritem_behavior_rate: user_id = ' + user_id + '\titem_id = ' + item_id)
     mongodb = MongodbUtils(db_address, 27017)
     train_user = mongodb.get_db().train_user
@@ -49,6 +69,13 @@ def cal_useritem_behavior_rate(user_id, item_id):
 
 def cal_positive_userset_vecvalues(fin_path='../data/positive_userset_2015-04-12-14-32-11.csv',
                                    fout_path='../data/popularity_desire_behaviorRate_data.csv'):
+    """
+    计算剩下的3个维度的值（商品热门度、用户购买欲、操作比重），并保存在csv文件中
+    格式：[user_id]_[item_id],popularity,desire,behavior_rate
+    :param fin_path: 正样本训练集的csv数据文件
+    :param fout_path: 结果输出路径
+    :return:
+    """
     fin = open(fin_path, 'r')
     fout = open(fout_path, 'w')
     logger.info('cal_positive_userset_vecvalues start')
