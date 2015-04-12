@@ -42,6 +42,8 @@ def cal_useritem_behavior_rate(user_id, item_id):
     stopTime = datetime.strptime(str('2014-12-18 00'), '%Y-%m-%d %H')
     max_count = train_user.find({"user_id": user_id, "time": {"$lt": stopTime}}).count()
     item_behavior_count = train_user.find({"user_id": user_id, "item_id": item_id, "time": {"$lt": stopTime}}).count()
+    if max_count == 0:
+        return 0
     return float(item_behavior_count) / float(max_count)
 
 
