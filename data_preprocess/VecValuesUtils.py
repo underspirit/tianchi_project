@@ -13,7 +13,7 @@ data_path = '%s/data' % (project_path)
 
 # project import
 sys.path.append(project_path)
-#from data_preprocess.MongoDB_Utils import MongodbUtils
+# from data_preprocess.MongoDB_Utils import MongodbUtils
 from log.get_logger import logger, Timer
 
 
@@ -32,6 +32,8 @@ def cal_item_popularity(item_id):
     :param item_id:
     :return:float类型的商品热度
     """
+    from data_preprocess.MongoDB_Utils import MongodbUtils
+
     mongodb = MongodbUtils(db_address, 27017)
     train_user = mongodb.get_db().train_user
     stoptime = datetime.strptime(str('2014-12-18 00'), '%Y-%m-%d %H')
@@ -46,6 +48,8 @@ def cal_user_desire(user_id):
     :param user_id:
     :return:float类型的用户购买欲
     """
+    from data_preprocess.MongoDB_Utils import MongodbUtils
+
     mongodb = MongodbUtils(db_address, 27017)
     train_user = mongodb.get_db().train_user
     stoptime = datetime.strptime(str('2014-12-18 00'), '%Y-%m-%d %H')
@@ -64,6 +68,8 @@ def cal_useritem_behavior_rate(user_id, item_id):
     :return:
     """
     # logger.info('cal_useritem_behavior_rate: user_id = ' + user_id + '\titem_id = ' + item_id)
+    from data_preprocess.MongoDB_Utils import MongodbUtils
+
     mongodb = MongodbUtils(db_address, 27017)
     train_user = mongodb.get_db().train_user
     stoptime = datetime.strptime(str('2014-12-18 00'), '%Y-%m-%d %H')
@@ -74,6 +80,7 @@ def cal_useritem_behavior_rate(user_id, item_id):
     return float(item_behavior_count) / float(max_count)
 
 
+@DeprecationWarning
 def cal_positive_userset_vecvalues(fin_path='../data/positive_userset_2015-04-12-14-32-11.csv',
                                    fout_path='../data/popularity_desire_behaviorRate_data.csv'):
     """
@@ -97,7 +104,8 @@ def cal_positive_userset_vecvalues(fin_path='../data/positive_userset_2015-04-12
             fout.write(user_id + '_' + item_id + ',')
             popularity = cal_item_popularity(item_id)
             behavior_rate = cal_useritem_behavior_rate(user_id, item_id)
-            fout.write(str(popularity) + ',' + str(desire) + ',' + str(behavior_rate) + '\n')
+            datastr = '%s,%s,%s\n' % (popularity, desire, behavior_rate)
+            fout.write(datastr)
     logger.info('cal_positive_userset_vecvalues done,output path=' + fout_path)
 
 
@@ -127,11 +135,11 @@ def cal_user_behavior(connect,
 
     f_output = f_train_set.replace('.csv', '_calUserBehavior.csv')  # 输出文件的名称
     predict_timestamp = arrow.get('2014-12-19').timestamp
-    time_atten = 3600*48  # 时间戳的衰减因子, exp(-1/a * delta_t)
+    time_atten = 3600 * 48  # 时间戳的衰减因子, exp(-1/a * delta_t)
     cursor = connect.cursor()
 
     with open(f_train_set, 'r') as fin, open(f_output, 'w') as fout:
-        fin.readline()    # 忽略首行
+        fin.readline()  # 忽略首行
         fout.write('user_id,item_id,see,favorite,cart,buy,tag\n')
         counter = 0  # for log
         logger.debug('start generate...')
@@ -139,23 +147,27 @@ def cal_user_behavior(connect,
             in_cols = in_line.strip().split(',')
             [user_id, item_id, tag] = in_cols
             sql = 'select behavior_type, time from train_user where user_id=%s and item_id=%s;' % (user_id, item_id)
-            #logger.debug('sql: %s' % (sql))
+            # logger.debug('sql: %s' % (sql))
             cursor.execute(sql)
             result = cursor.fetchall()
             time_weights = [0.0, 0.0, 0.0, 0.0]
             for [behavior_type, timestamp] in result:
-                time_weights[int(behavior_type)-1] += exp((timestamp-predict_timestamp)/time_atten)
-            fout.write('%s,%s,%s,%s,%s,%s,%s\n' % (user_id, item_id, time_weights[0], time_weights[1], time_weights[2], time_weights[3], tag))
+                time_weights[int(behavior_type) - 1] += exp((timestamp - predict_timestamp) / time_atten)
+            fout.write('%s,%s,%s,%s,%s,%s,%s\n' % (
+                user_id, item_id, time_weights[0], time_weights[1], time_weights[2], time_weights[3], tag))
             counter += 1
             if counter % 300 == 0:
-                logger.debug('NO.%s: user_id=%s, item_id=%s, time_weights=%s, tag=%s' % (counter, user_id, item_id, time_weights, tag))
+                logger.debug('NO.%s: user_id=%s, item_id=%s, time_weights=%s, tag=%s' % (
+                    counter, user_id, item_id, time_weights, tag))
 
     cursor.close()
 
-def cal_vecvalues_tail(fin_path='../data/split_train_test_sets/train_set.csv', fout_path='../data/vecvalues_tail.csv'):
+
+def cal_vecvalues_tail(fin_path='../data/train_set.csv', fout_path='../data/vecvalues_tail.csv'):
     """
     计算后三维的向量，需要mongodb支持
-    :param fin_path:
+    :param fin_path:样本集csv路径
+    :param fout_path:结果路径
     :return:
     """
     logger.info('cal_vecvalues_tail start')
@@ -172,9 +184,46 @@ def cal_vecvalues_tail(fin_path='../data/split_train_test_sets/train_set.csv', f
         popularity = cal_item_popularity(item_id)
         desire = cal_user_desire(user_id)
         behavior_rate = cal_useritem_behavior_rate(user_id, item_id)
-        datastr = tag + ',' + str(popularity) + ',' + str(desire) + ',' + str(behavior_rate) + '\n'
+        datastr = '%s,%s,%s,%s\n' % (tag, popularity, desire, behavior_rate)
+        # datastr = tag + ',' + str(popularity) + ',' + str(desire) + ',' + str(behavior_rate) + '\n'
         fout.write(datastr)
     logger.info('cal_vecvalues_tail done, result path=' + fout_path)
+
+
+def combine_data(userbehavior_filepath='%s/train_set_calUserBehavior.csv' % (data_path),
+                 tail_filepath='%s/vecvalues_tail.csv' % (data_path),
+                 csv_output_path='%s/combined_vec_data.csv' % (data_path),
+                 svm_output_path='%s/svmdata.dat' % (data_path)):
+    logger.info('start combining data')
+    userbehavior_file = open(userbehavior_filepath, 'r')
+    tail_file = open(tail_filepath, 'r')
+    csvout = open(csv_output_path, 'w')
+    csvout.write('tag,see,favorite,cart,buy,popularity,desire,behavior_rate\n')
+    svmout = open(svm_output_path, 'w')
+    behaviors = userbehavior_file.readlines()
+    tails = tail_file.readlines()
+    for index in range(1, len(behaviors)):
+        tails_line = tails[index].replace('\n', '')
+        data_tail = tails_line.split(',')
+        behavior_line = behaviors[index].replace('\n', '')
+        data_behavior = behavior_line.split(',')
+        tag = data_tail[0]
+        see = data_behavior[2]
+        favorite = data_behavior[3]
+        cart = data_behavior[4]
+        buy = data_behavior[5]
+        popularity = data_tail[1]
+        desire = data_tail[2]
+        behavior_rate = data_tail[3]
+        # 构建svm用向量数据格式
+        svmstr = '%s 0:%s 1:%s 2:%s 3:%s 4:%s 5:%s 6:%s\n' % (
+            tag, see, favorite, cart, buy, popularity, desire, behavior_rate)
+        csvstr = '%s,%s,%s,%s,%s,%s,%s,%s\n' % (
+            tag, see, favorite, cart, buy, popularity, desire, behavior_rate)
+        svmout.write(svmstr)
+        csvout.write(csvstr)
+    logger.info('combine_data done')
+
 
 if __name__ == '__main__':
     """
@@ -184,16 +233,19 @@ if __name__ == '__main__':
     # print cal_useritem_behavior_rate('38056569', '324474695')
     # cal_positive_userset_vecvalues()
 
-    cal_vecvalues_tail()
 
     # for i in xrange(10):
     # popularity = 1 / (1 + math.e ** (-(i/100.0)))-0.5
     # print popularity
     """
 
-    connect = MySQLdb.connect(host='127.0.0.1',
-                              user='tianchi_data',
-                              passwd='tianchi_data',
-                              db='tianchi')
-    cal_user_behavior(connect)
-    connect.close()
+    # cal_vecvalues_tail()
+
+    combine_data()
+
+    # connect = MySQLdb.connect(host='127.0.0.1',
+    # user='tianchi_data',
+    # passwd='tianchi_data',
+    # db='tianchi')
+    # cal_user_behavior(connect)
+    # connect.close()
