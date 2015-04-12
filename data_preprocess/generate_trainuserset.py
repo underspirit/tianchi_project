@@ -8,7 +8,7 @@ __author__ = 'ITTC-Jayvee'
 db_address = json.loads(open('../conf/DB_Address.conf', 'r').read())['MongoDB_Address']
 
 
-def generate_positive_userset(foutpath='../data/positive_userset.json'):
+def generate_positive_userset(foutpath='../data/positive_userset.csv'):
     logger.info('start generate_positive_userset')
     mongodb = MongodbUtils(db_address, 27017)
     train_user = mongodb.get_db().train_user
@@ -20,16 +20,20 @@ def generate_positive_userset(foutpath='../data/positive_userset.json'):
 
     fout = open(foutpath, 'w')
     for userid in user_ids:
-        data = {"user_id": userid}
+        # datastr = userid
+        fout.write(userid)
+        # data = {"user_id": userid}
         bought_item_ids = train_user.find(
             {'user_id': userid, "behavior_type": "4", "time": {"$gt": startTime, "$lt": stopTime}},
             {'item_id': 1, '_id': 0}).distinct("item_id")
-        bought_items = []
+        # bought_items = []
         for itemid in bought_item_ids:
-            bought_items.append(itemid)
-        data['bought_items'] = bought_items
-        jsonstr = json.dumps(data)
-        fout.write(jsonstr + '\n')
+            fout.write(','+itemid)
+            # bought_items.append(itemid)
+        # data['bought_items'] = bought_items
+        # jsonstr = json.dumps(data)
+        fout.write('\n')
+        # fout.write(jsonstr + '\n')
     logger.info('generate_positive_userset done,output path = ' + foutpath)
     # item_ids = train_item.distinct("item_id")
     # print len(user_ids)
@@ -38,4 +42,4 @@ def generate_positive_userset(foutpath='../data/positive_userset.json'):
 
 
 if __name__ == '__main__':
-    generate_positive_userset('../data/positive_userset_' + str(datetime.now().strftime('%Y-%m-%d-%H-%M-%S')) + '.json')
+    generate_positive_userset('../data/positive_userset_' + str(datetime.now().strftime('%Y-%m-%d-%H-%M-%S')) + '.csv')
