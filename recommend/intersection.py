@@ -26,13 +26,13 @@ def intersect(f_result='%s/UserCF_recommend_3.csv' % (data_path),
 
     Args:
         f_result: string, 原始的结果文件
-                --------------- content -------------
+                 -------------- content -------------
                 | item_id,item_geohash,item_category |
-                --------------------------------------
+                 ------------------------------------
         f_item_set: string, 阿里提供的物品集文件
-                ----- content ----
+                 ---- content ----
                 | user_id,item_id |
-                ------------------
+                 -----------------
     Returns:
         None
     """
