@@ -18,16 +18,17 @@ ___
 
 ### data/ 结果文件说明
 
-- UserCF_recommend.csv                     对每个用户推荐5个商品
+├── popularity_desire_behaviorRate_data.csv
+├── positive_userset_2015-04-10-17-43-38.json
+├── positive_userset_2015-04-12-14-32-11.csv
+├── result                                  存放推荐结果
+│   ├── UserCF_recommend_3.csv
+│   ├── UserCF_recommend_3_intersect.csv
+│   ├── UserCF_recommend.csv
+│   └── UserCF_recommend_intersect.csv
+├── split_train_test_sets                   存放测试集和训练集
+│   ├── test_set.csv
+│   └── train_set.csv
+├── tianchi_mobile_recommend_train_item.csv 天池提供的商品集
+└── user_view_item_num.csv                  用户浏览商品数的结果
 
-- UserCF_recommend_intersect.csv           对每个用户推荐5个商品,并与商品集取交集
-j
-- UserCF_recommend_3.csv                   对每个用户推荐3个商品
-
-- UserCF_recommend_3_intersect.csv         对每个用户推荐3个商品,并与商品集取交集
-
-- tianchi_mobile_recommend_train_item.csv  天池提供的商品集
-
-- user_view_item_num.csv                   用户浏览商品数的结果
-
-- positive_userset.csv                     正样本结果
