@@ -21,13 +21,10 @@ def cal_item_popularity(item_id):
     :param item_id:
     :return:float类型的商品热度
     """
-    # logger.info('cal_item_popularity: item_id = ' + item_id)
     mongodb = MongodbUtils(db_address, 27017)
     train_user = mongodb.get_db().train_user
-    # print len(train_user.find({'behavior_type': '4'}).distinct('item_id'))
-    # startTime = datetime.strptime(str('2014-12-18 00'), '%Y-%m-%d %H')
-    stopTime = datetime.strptime(str('2014-12-18 00'), '%Y-%m-%d %H')
-    bought_count = train_user.find({'item_id': item_id, 'behavior_type': '4', "time": {"$lt": stopTime}}).count()
+    stoptime = datetime.strptime(str('2014-12-18 00'), '%Y-%m-%d %H')
+    bought_count = train_user.find({'item_id': item_id, 'behavior_type': '4', "time": {"$lt": stoptime}}).count()
     popularity = 1 / (1 + math.e ** (-bought_count)) - 0.5
     return popularity
 
@@ -38,12 +35,11 @@ def cal_user_desire(user_id):
     :param user_id:
     :return:float类型的用户购买欲
     """
-    # logger.info('cal_user_desire: user_id = ' + user_id)
     mongodb = MongodbUtils(db_address, 27017)
     train_user = mongodb.get_db().train_user
-    stopTime = datetime.strptime(str('2014-12-18 00'), '%Y-%m-%d %H')
-    max_count = train_user.find({"user_id": user_id, "time": {"$lt": stopTime}}).count()
-    bought_count = train_user.find({"user_id": user_id, 'behavior_type': '4', "time": {"$lt": stopTime}}).count()
+    stoptime = datetime.strptime(str('2014-12-18 00'), '%Y-%m-%d %H')
+    max_count = train_user.find({"user_id": user_id, "time": {"$lt": stoptime}}).count()
+    bought_count = train_user.find({"user_id": user_id, 'behavior_type': '4', "time": {"$lt": stoptime}}).count()
     if max_count == 0:
         return 0
     return float(bought_count) / float(max_count)
@@ -59,9 +55,9 @@ def cal_useritem_behavior_rate(user_id, item_id):
     # logger.info('cal_useritem_behavior_rate: user_id = ' + user_id + '\titem_id = ' + item_id)
     mongodb = MongodbUtils(db_address, 27017)
     train_user = mongodb.get_db().train_user
-    stopTime = datetime.strptime(str('2014-12-18 00'), '%Y-%m-%d %H')
-    max_count = train_user.find({"user_id": user_id, "time": {"$lt": stopTime}}).count()
-    item_behavior_count = train_user.find({"user_id": user_id, "item_id": item_id, "time": {"$lt": stopTime}}).count()
+    stoptime = datetime.strptime(str('2014-12-18 00'), '%Y-%m-%d %H')
+    max_count = train_user.find({"user_id": user_id, "time": {"$lt": stoptime}}).count()
+    item_behavior_count = train_user.find({"user_id": user_id, "item_id": item_id, "time": {"$lt": stoptime}}).count()
     if max_count == 0:
         return 0
     return float(item_behavior_count) / float(max_count)
@@ -79,6 +75,7 @@ def cal_positive_userset_vecvalues(fin_path='../data/positive_userset_2015-04-12
     fin = open(fin_path, 'r')
     fout = open(fout_path, 'w')
     logger.info('cal_positive_userset_vecvalues start')
+    fout.write('user_id_item_id,popularity,desire,behavior_rate\n')
     for line in fin:
         line = line.replace('\n', '')
         ids = line.split(',')
@@ -93,12 +90,39 @@ def cal_positive_userset_vecvalues(fin_path='../data/positive_userset_2015-04-12
     logger.info('cal_positive_userset_vecvalues done,output path=' + fout_path)
 
 
+def cal_vecvalues_tail(fin_path='../data/split_train_test_sets/train_set.csv', fout_path='../data/vecvalues_tail.csv'):
+    """
+    计算后三维的向量，需要mongodb支持
+    :param fin_path:
+    :return:
+    """
+    logger.info('cal_vecvalues_tail start')
+    fin = open(fin_path, 'r')
+    fin.readline()  # 跳过标题行
+    fout = open(fout_path, 'w')
+    fout.write('tag,popularity,desire,behavior_rate\n')
+    for line in fin:
+        line = line.replace('\n', '')
+        data = line.split(',')
+        user_id = data[0]
+        item_id = data[1]
+        tag = data[2]
+        popularity = cal_item_popularity(item_id)
+        desire = cal_user_desire(user_id)
+        behavior_rate = cal_useritem_behavior_rate(user_id, item_id)
+        datastr = tag + ',' + str(popularity) + ',' + str(desire) + ',' + str(behavior_rate) + '\n'
+        fout.write(datastr)
+    logger.info('cal_vecvalues_tail done, result path=' + fout_path)
+
 if __name__ == '__main__':
     # print cal_item_popularity('71486077')
-    print cal_item_popularity('324474695')
-    print cal_user_desire('38056569')
-    print cal_useritem_behavior_rate('38056569', '324474695')
-    cal_positive_userset_vecvalues()
+    # print cal_item_popularity('324474695')
+    # print cal_user_desire('38056569')
+    # print cal_useritem_behavior_rate('38056569', '324474695')
+    # cal_positive_userset_vecvalues()
+
+    cal_vecvalues_tail()
+
     # for i in xrange(10):
     # popularity = 1 / (1 + math.e ** (-(i/100.0)))-0.5
     # print popularity
