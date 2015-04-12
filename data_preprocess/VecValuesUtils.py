@@ -1,14 +1,25 @@
 # coding=utf-8
+
 import json
 from datetime import datetime
 import math
-from data_preprocess.MongoDB_Utils import MongodbUtils
-from log.get_logger import logger
+import MySQLdb
+import os
+import sys
+
+# project path
+project_path = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
+data_path = '%s/data' % (project_path)
+
+# project import
+sys.path.append(project_path)
+#from data_preprocess.MongoDB_Utils import MongodbUtils
+from log.get_logger import logger, Timer
 
 
-__author__ = 'Jayvee'
+__author__ = 'Jayvee, jiaying.lu'
 
-db_address = json.loads(open('../conf/DB_Address.conf', 'r').read())['MongoDB_Address']
+db_address = json.loads(open('%s/conf/DB_Address.conf' % (project_path), 'r').read())['MongoDB_Address']
 MAX_BOUGHT_BEHAVIOR_COUNT = 120236
 
 
@@ -93,7 +104,60 @@ def cal_positive_userset_vecvalues(fin_path='../data/positive_userset_2015-04-12
     logger.info('cal_positive_userset_vecvalues done,output path=' + fout_path)
 
 
+@Timer
+def cal_user_behavior(connect,
+                      f_train_set='%s/train_set.csv' % (data_path)):
+    """
+    计算时间加权后的用户行为
+
+    结果输出文件的格式：
+         -------------- content ---------------
+        | user_id,item_id,see,favorite,cart,buy,tag |
+         --------------------------------------
+        其中，see代表浏览的时间加权结果，favorite代表收藏,cart代表添加到购物车,favorite代表买
+
+    Args:
+        connect: MySQLdb.connect(), 数据库连接句柄
+        f_train_set: string, 训练集结果文件
+                 ------ content ------
+                | user_id,item_id,tag |
+                 ---------------------
+    Returns:
+        None
+    """
+    import arrow
+    from math import exp
+
+    f_output = f_train_set.replace('.csv', '_calUserBehavior.csv')  # 输出文件的名称
+    predict_timestamp = arrow.get('2014-12-19').timestamp
+    time_atten = 3600*48  # 时间戳的衰减因子, exp(-1/a * delta_t)
+    cursor = connect.cursor()
+
+    with open(f_train_set, 'r') as fin, open(f_output, 'w') as fout:
+        fin.readline()    # 忽略首行
+        fout.write('user_id,item_id,see,favorite,cart,buy,tag\n')
+        counter = 0  # for log
+        logger.debug('start generate...')
+        for in_line in fin:
+            in_cols = in_line.strip().split(',')
+            [user_id, item_id, tag] = in_cols
+            sql = 'select behavior_type, time from train_user where user_id=%s and item_id=%s;' % (user_id, item_id)
+            #logger.debug('sql: %s' % (sql))
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            time_weights = [0.0, 0.0, 0.0, 0.0]
+            for [behavior_type, timestamp] in result:
+                time_weights[int(behavior_type)-1] += exp((timestamp-predict_timestamp)/time_atten)
+            fout.write('%s,%s,%s,%s,%s,%s,%s\n' % (user_id, item_id, time_weights[0], time_weights[1], time_weights[2], time_weights[3], tag))
+            counter += 1
+            if counter % 300 == 0:
+                logger.debug('NO.%s: user_id=%s, item_id=%s, time_weights=%s, tag=%s' % (counter, user_id, item_id, time_weights, tag))
+
+    cursor.close()
+
+
 if __name__ == '__main__':
+    """
     # print cal_item_popularity('71486077')
     print cal_item_popularity('324474695')
     print cal_user_desire('38056569')
@@ -102,3 +166,11 @@ if __name__ == '__main__':
     # for i in xrange(10):
     # popularity = 1 / (1 + math.e ** (-(i/100.0)))-0.5
     # print popularity
+    """
+
+    connect = MySQLdb.connect(host='127.0.0.1',
+                              user='tianchi_data',
+                              passwd='tianchi_data',
+                              db='tianchi')
+    cal_user_behavior(connect)
+    connect.close()

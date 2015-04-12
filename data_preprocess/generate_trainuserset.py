@@ -7,8 +7,8 @@ import os
 import sys
 import MySQLdb
 from datetime import datetime
-from data_preprocess.MongoDB_Utils import MongodbUtils
-from log.get_logger import logger
+#from data_preprocess.MongoDB_Utils import MongodbUtils
+#from log.get_logger import logger
 
 # project path
 project_path = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
@@ -77,13 +77,16 @@ def generate_train_set(connect,
     """
     import arrow
     cursor = connect.cursor()
+    # 正样本的时间过滤条件
+    positive_timestamp_start = arrow.get('2014-12-17').timestamp
+    positive_timestamp_end = arrow.get('2014-12-18').timestamp
 
     with open(f_train_set, 'w') as fout:
         fout.write('user_id,item_id,tag\n')
         set_counter = 0
         # 正样本
         tag = 1
-        sql = 'select distinct user_id, item_id from train_user where behavior_type=4 and time>%s and time <=%s;' % (arrow.get('2014-12-16').timestamp, arrow.get('2014-12-17').timestamp)
+        sql = 'select distinct user_id, item_id from train_user where behavior_type=4 and time>%s and time <=%s;' % (positive_timestamp_start, positive_timestamp_end)
         logger.debug('positive sql: %s' % (sql))
         cursor.execute(sql)
         result = cursor.fetchall()
@@ -103,10 +106,9 @@ def generate_train_set(connect,
         logger.debug('negtive sql: %s' % (sql))
         cursor.execute(sql)
         result = cursor.fetchall()
-        train_timestamp = arrow.get('2014-12-17').timestamp 
         logger.debug('start store negtive set')
         for [user_id, item_id, time] in result:
-            if time < train_timestamp and (user_id, item_id) not in positive_set:
+            if time < positive_timestamp_end and (user_id, item_id) not in positive_set:
                 log_counter += 1
                 fout.write('%s,%s,%s\n' % (user_id, item_id, tag))
                 if log_counter == set_counter:
