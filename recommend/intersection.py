@@ -54,4 +54,4 @@ def intersect(f_result='%s/UserCF_recommend_3.csv' % (data_path),
 
 if __name__ == '__main__':
     #intersect()
-    intersect('%s/UserCF_recommend.csv'%(data_path))
+    intersect('%s/UserCF_recommend_1.csv'%(data_path))

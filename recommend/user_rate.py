@@ -89,3 +89,4 @@ if __name__ == '__main__':
     #add_time_affect(connect)
     connect.close()
     output_userCF()
+    output_userCF(topN=1, fout_name='%s/UserCF_recommend_1.csv' % (data_path))
