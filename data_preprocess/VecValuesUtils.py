@@ -190,7 +190,8 @@ def cal_vecvalues_tail(fin_path='../data/train_set.csv', fout_path='../data/vecv
         datastr = '%s,%s,%s,%s\n' % (tag, popularity, desire, behavior_rate)
         # datastr = tag + ',' + str(popularity) + ',' + str(desire) + ',' + str(behavior_rate) + '\n'
         fout.write(datastr)
-        if count % 5000 == 0:
+        count += 1
+        if count % 2000 == 0:
             logger.info('calculated count:\t%s' % count)
     logger.info('cal_vecvalues_tail done, result path=' + fout_path)
 
