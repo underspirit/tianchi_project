@@ -28,9 +28,10 @@ def Timer(func):
     @functools.wraps(func)
     def _wrapper(*args, **kwargs):
         start = int(time.time())
-        func(*args, **kwargs)
+        result = func(*args, **kwargs)
         end = int(time.time())
         logger.info('%s() Done. Elapsed %ss.' % (func.__name__, end-start))
+        return result
 
     return _wrapper
 
@@ -39,5 +40,6 @@ if __name__ == '__main__':
     @Timer
     def foo(arg1, kwarg1='default'):
         print 'in foo(%s, kwarg1=%s)' % (arg1, kwarg1)
+        return 'haha'
 
-    foo('test_Timer')
+    print(foo('test_Timer'))
