@@ -7,7 +7,7 @@ import os
 import sys
 import MySQLdb
 from datetime import datetime
-#from data_preprocess.MongoDB_Utils import MongodbUtils
+# from data_preprocess.MongoDB_Utils import MongodbUtils
 #from log.get_logger import logger
 
 # project path
@@ -18,12 +18,13 @@ data_path = '%s/data' % (project_path)
 sys.path.append(project_path)
 from log.get_logger import logger, Timer
 
-__author__ = 'ITTC-Jayvee, jiaying.lu'
+__author__ = 'Jayvee, jiaying.lu'
 
 
 def generate_positive_userset(foutpath='../data/positive_userset.json'):
     # 移动位置，因为服务器上有一些包依赖不完整
     from data_preprocess.MongoDB_Utils import MongodbUtils
+
     db_address = json.loads(open('../conf/DB_Address.conf', 'r').read())['MongoDB_Address']
     # end 移动位置
 
@@ -46,7 +47,7 @@ def generate_positive_userset(foutpath='../data/positive_userset.json'):
             {'item_id': 1, '_id': 0}).distinct("item_id")
         # bought_items = []
         for itemid in bought_item_ids:
-            fout.write(','+itemid)
+            fout.write(',' + itemid)
             # bought_items.append(itemid)
         # data['bought_items'] = bought_items
         # jsonstr = json.dumps(data)
@@ -81,7 +82,7 @@ def generate_train_set(connect,
     """
     import arrow
     from random import randint
-    
+
     cursor = connect.cursor()
     # 正样本的时间过滤条件
     # positive_timestamp_start = arrow.get('2014-12-17').timestamp
@@ -95,7 +96,8 @@ def generate_train_set(connect,
         set_counter = 0
         # 正样本
         tag = 1
-        sql = 'select distinct user_id, item_id from train_user where behavior_type=4 and time>%s and time <=%s;' % (positive_timestamp_start, positive_timestamp_end)
+        sql = 'select distinct user_id, item_id from train_user where behavior_type=4 and time>%s and time <=%s;' % (
+        positive_timestamp_start, positive_timestamp_end)
         logger.debug('positive sql: %s' % (sql))
         cursor.execute(sql)
         result = cursor.fetchall()
@@ -133,12 +135,14 @@ def generate_train_set(connect,
         """
 
         # Step 1: 获得PK的最小值和PK的最大值
-        sql_PK_min = 'select record_id from train_user where time>%s and time <=%s order by time limit 1;' % (negative_timestamp_start, negative_timestamp_end)
+        sql_PK_min = 'select record_id from train_user where time>%s and time <=%s order by time limit 1;' % (
+        negative_timestamp_start, negative_timestamp_end)
         cursor.execute(sql_PK_min)
         result = cursor.fetchall()
         PK_min = int(result[0][0])
         logger.debug('min Primary Key = %s' % (PK_min))
-        sql_PK_max = 'select record_id from train_user where time>%s and time <=%s order by time DESC limit 1;' % (negative_timestamp_start, negative_timestamp_end)
+        sql_PK_max = 'select record_id from train_user where time>%s and time <=%s order by time DESC limit 1;' % (
+        negative_timestamp_start, negative_timestamp_end)
         cursor.execute(sql_PK_max)
         result = cursor.fetchall()
         PK_max = int(result[0][0])
@@ -156,7 +160,6 @@ def generate_train_set(connect,
                     if log_counter % 300 == 0:
                         logger.debug('[train set] negtive No.%s' % (log_counter))
         logger.info('[train set] negtive set DONE, num of set = %s' % (log_counter))
-
 
     cursor.close()
 
@@ -179,12 +182,14 @@ def generate_test_set(connect,
         None
     """
     import arrow
+
     cursor = connect.cursor()
     (timerange_start, timerange_end) = map(lambda elem: arrow.get(elem).timestamp, timerange)
 
     with open(f_train_set, 'w') as fout:
         fout.write('user_id,item_id\n')
-        sql = 'select distinct user_id, item_id from train_user where behavior_type=4 and time>%s and time<=%s;' % (timerange_start, timerange_end)
+        sql = 'select distinct user_id, item_id from train_user where behavior_type=4 and time>%s and time<=%s;' % (
+        timerange_start, timerange_end)
         logger.debug('sql: %s' % (sql))
         cursor.execute(sql)
         result = cursor.fetchall()
@@ -192,7 +197,44 @@ def generate_test_set(connect,
         for [user_id, item_id] in result:
             fout.write('%s,%s\n' % (user_id, item_id,))
         logger.debug('success generate test set')
-    
+
+    cursor.close()
+
+
+@Timer
+def generate_predict_set(connect,
+                         timerange,
+                         f_train_set='%s/test_set.csv' % (data_path)):
+    """
+    构建预测集
+
+    Args:
+        connect: Mysqldb.connect(), 数据库连接句柄
+        timerange: tuple, 测试集的时间筛选条件, (start, end)
+        f_train_set: string, 测试集结果文件
+                 ---- content ----
+                | user_id,item_id |
+                 -----------------
+    Returns:
+        None
+    """
+    import arrow
+
+    cursor = connect.cursor()
+    (timerange_start, timerange_end) = map(lambda elem: arrow.get(elem).timestamp, timerange)
+
+    with open(f_train_set, 'w') as fout:
+        fout.write('user_id,item_id,tag\n')
+        sql = 'select distinct user_id, item_id from train_user where time>%s and time<=%s;' % (
+        timerange_start, timerange_end)
+        logger.debug('sql: %s' % (sql))
+        cursor.execute(sql)
+        result = cursor.fetchall()
+        logger.debug('start generate test set')
+        for [user_id, item_id] in result:
+            fout.write('%s,%s,%s\n' % (user_id, item_id, -1))
+        logger.debug('success generate test set')
+
     cursor.close()
 
 
