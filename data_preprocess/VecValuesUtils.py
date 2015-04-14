@@ -232,14 +232,14 @@ def combine_data(userbehavior_filepath='%s/train_set_calUserBehavior.csv' % (dat
 
 
 def get_predict_vecdata(timerange=('2014-12-16', '2014-12-19'),
-                        predict_set_path='%s/temp/predict_set.csv' % (data_path),
-                        predict_vectail_path='%s/temp/predict_vectail.csv' % (data_path),
+                        predict_set_path='%s/predict/predict_set.csv' % (data_path),
+                        predict_vectail_path='%s/predict/predict_vectail.csv' % (data_path),
                         csv_output_path='%s/predict/combined_vec_data.csv' % (data_path),
                         svm_output_path='%s/predict/svmdata.dat' % (data_path)):
     from data_preprocess import generate_userset
     import MySQLdb
 
-    connect = MySQLdb.connect(host='10.108.192.119',
+    connect = MySQLdb.connect(host='127.0.0.1',
                               user='tianchi_data',
                               passwd='tianchi_data',
                               db='tianchi')
@@ -271,8 +271,8 @@ if __name__ == '__main__':
 
     # combine_data()
 
-    get_predict_vecdata(timerange=('2014-12-18', '2014-12-19'), predict_set_path='../data/temp/predict_set.csv',
-                        predict_vectail_path='../data/temp/predict_vectail.csv')
+    get_predict_vecdata(timerange=('2014-12-18', '2014-12-19'), predict_set_path='../data/predict/predict_set.csv',
+                        predict_vectail_path='../data/predict/predict_vectail.csv')
 
     # connect = MySQLdb.connect(host='127.0.0.1',
     # user='tianchi_data',
