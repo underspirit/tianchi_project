@@ -14,8 +14,6 @@ sys.path.append(project_path)
 from log.get_logger import logger, Timer
 
 
-
-
 @Timer
 def generate_X_y_arrays(f_train_set='%s/train_set.csv' % (data_path)):
     """
@@ -57,16 +55,26 @@ def train_classifier(clf, X, y):
         None
     """
     from sklearn import grid_search, cross_validation
-    clf.fit(X, y)
+
     """grid search 的结果
+    clf.fit(X, y)
     #logger.info('Classifier fit Done. Best params are %s with a best score of %0.2f' % (clf.best_params_, clf.best_score_))
     #logger.info('And scores ars %s' % (clf.grid_scores_))
     """
+
     # 简单的交叉验证
+    clf.fit(X, y)
     scores = cross_validation.cross_val_score(clf, X, y, cv=5)
-    logger.info('Classifier fit Done. And cross-validated scores ars %s' % (scores))
+    logger.info('Classifier fit Done. And simple cross-validated scores ars %s' % (scores))
 
     # 十折法
+    kf = cross_validation.KFold(len(X), n_folds=10)
+    for train_index, test_index in kf:
+        X_train, X_test = X[train_index], X[test_index]
+        y_train, y_test = y[train_index], y[test_index]
+        clf.fit(X_train, y_train)
+        score = clf.score(X_test, y_test)
+        logger.info('10 folds cross-validated scores are %s.' % (score))
 
 
 @Timer

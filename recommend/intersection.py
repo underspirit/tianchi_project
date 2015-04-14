@@ -22,7 +22,7 @@ from log.get_logger import logger
 def intersect(f_result='%s/UserCF_recommend_3.csv' % (data_path),
               f_item_set='%s/tianchi_mobile_recommend_train_item.csv' % (data_path)):
     """
-    对结果和给出的item_set取交集，剔除结果中不属于
+    对结果和给出的item_set取交集，剔除结果中不属于物品子集的
 
     Args:
         f_result: string, 原始的结果文件

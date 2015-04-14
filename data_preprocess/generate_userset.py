@@ -226,7 +226,7 @@ def generate_predict_set(connect,
     with open(f_train_set, 'w') as fout:
         fout.write('user_id,item_id,tag\n')
         sql = 'select distinct user_id, item_id from train_user where time>%s and time<=%s;' % (
-        timerange_start, timerange_end)
+                                                                                               timerange_start, timerange_end)
         logger.debug('sql: %s' % (sql))
         cursor.execute(sql)
         result = cursor.fetchall()
